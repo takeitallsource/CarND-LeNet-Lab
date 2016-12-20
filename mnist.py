@@ -1,0 +1,57 @@
+import tensorflow as tf
+import lenet as lenet
+import matplotlib.pyplot as plot
+
+from tensorflow.examples.tutorials.mnist import input_data
+
+mnist = input_data.read_data_sets("MNIST_DATA/", one_hot=True)
+
+batch_size = 100
+epochs = 10000
+evaluation_steps = 100
+
+
+def preprocess_input(input):
+    reshaped = tf.reshape(input, [-1, 28, 28, 1])
+    return tf.pad(reshaped, [[0, 0], [2, 2], [2, 2], [0, 0]], mode='CONSTANT')
+
+
+def optimize(stack, y, learning_rate=1e-4):
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(stack, y)
+    loss = tf.reduce_mean(cross_entropy)
+    return tf.train.AdamOptimizer(learning_rate).minimize(loss)
+
+
+def evaluate(stack, y):
+    y_prediction = tf.nn.softmax(stack)
+    prediction_match = tf.equal(tf.argmax(y_prediction, dimension=1), tf.argmax(y, dimension=1))
+    return tf.reduce_mean(tf.cast(prediction_match, tf.float32))
+
+
+def pipeline():
+    x = tf.placeholder(tf.float32, [None, 784])
+    y = tf.placeholder(tf.float32, [None, 10])
+
+    x_ = preprocess_input(x)
+    stack = lenet.stack(x_)
+
+    optimizer = optimize(stack, y)
+    evaluator = evaluate(stack, y)
+
+    losses=[]
+
+    with tf.Session() as session:
+        session.run(tf.global_variables_initializer())
+        for epoch in range(epochs):
+            x_data, y_data = mnist.train.next_batch(batch_size)
+            session.run(optimizer, feed_dict={x: x_data, y: y_data})
+            losses.append(session.run(evaluator, feed_dict={x: x_data, y: y_data}))
+
+        session.close()
+
+    plot.plot(losses)
+    plot.show()
+
+pipeline()
+
+
