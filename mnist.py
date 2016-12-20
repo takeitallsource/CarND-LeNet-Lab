@@ -6,17 +6,16 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 mnist = input_data.read_data_sets("MNIST_DATA/", one_hot=True)
 
-batch_size = 100
-epochs = 10000
-evaluation_steps = 100
+batch_size = 50
+epochs = 100
 
 
-def preprocess_input(input):
+def preproccess_input(input):
     reshaped = tf.reshape(input, [-1, 28, 28, 1])
     return tf.pad(reshaped, [[0, 0], [2, 2], [2, 2], [0, 0]], mode='CONSTANT')
 
 
-def optimize(stack, y, learning_rate=1e-4):
+def optimize(stack, y, learning_rate=1e-2):
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(stack, y)
     loss = tf.reduce_mean(cross_entropy)
     return tf.train.AdamOptimizer(learning_rate).minimize(loss)
@@ -32,13 +31,13 @@ def pipeline():
     x = tf.placeholder(tf.float32, [None, 784])
     y = tf.placeholder(tf.float32, [None, 10])
 
-    x_ = preprocess_input(x)
+    x_ = preproccess_input(x)
     stack = lenet.stack(x_)
 
     optimizer = optimize(stack, y)
     evaluator = evaluate(stack, y)
 
-    losses=[]
+    losses = []
 
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())
